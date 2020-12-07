@@ -27,7 +27,7 @@ class ResLayer(nn.Module):
         res = x
         x = self.conv_dilated(x)
         if hp.training.speaker_conditioning:
-            x += torch.stack(2 * x.shape[1] * [self.bias(conditioning)], dim=1)
+            x += torch.stack(x.shape[1] * [self.bias(conditioning)], dim=1)
         a, b = x.split(x.shape[1] // 2, dim=1)
         x = torch.tanh(a) * torch.sigmoid(b)
         x = self.conv_1x1(x)
