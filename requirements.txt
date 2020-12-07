@@ -1,0 +1,8 @@
+librosa>=0.8.0
+numpy>=1.18.1
+pandas>=1.0.1
+scipy>=1.4.1
+soundfile>=0.10.3.post1
+torch>=1.6.0+cu101
+torchaudio>=0.6.0
+tqdm>=4.54.1
