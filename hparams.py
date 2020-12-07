@@ -9,7 +9,7 @@ class hparams:
         chance_for_no_reverb = 0.1  # Own choice, to ensure model learns to map dry speech to dry speech
         chance_for_no_noise = 0.1  # Own choice, to ensure model learns to map dry speech to dry speech
         chance_for_all_zero_conditioning = 0.1  # Loosely based on Rethage (2018), depends on number of speakers
-        speaker_conditioning = False  # For training without speaker conditioning scheme
+        speaker_conditioning = True  # For training without speaker conditioning scheme
         sequence_length = 32000  # According to Su et al. (2020)
         resample_freqs = [16000, 8000, 4000]  # According to Su et al. (2020)
         mixed_precision = True
