@@ -60,7 +60,7 @@ prediction's subjectively perceived audio quality. For training, we used the fol
 
 [Nautilus Speaker Characterization (NSC) Corpus](https://www.qu.tu-berlin.de/menue/forschung/abgeschlossene_projekte/nsc_corpus/)
 . We chose NSC over [DAPS](https://ccrma.stanford.edu/~gautham/Site/daps.html) (the dataset used in the original paper)
-since NSC features 300 individual speakers compared to DAPS's 29. Also, for our application, German speakers are
+since NSC features 300 individual speakers compared to DAPS's 20. Also, for our application, German speakers are
 preferable for training.
 
 ### IR data
