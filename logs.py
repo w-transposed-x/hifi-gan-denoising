@@ -24,9 +24,9 @@ class Logger(SummaryWriter):
 
         # Log audio data
         if audio_data is not None:
-            for i in range(hp.training.batch_size):
-                for name, sound_data in audio_data.items():
+            for name, sound_data in audio_data.items():
+                for i, sound in enumerate(sound_data):
                     self.add_audio(f'{i}_{name}',
-                                   librosa.util.normalize(sound_data[i].squeeze()),
+                                   librosa.util.normalize(sound.squeeze()),
                                    global_step=step,
                                    sample_rate=hp.dsp.sample_rate)
