@@ -13,7 +13,7 @@ class hparams:
         sequence_length = 32000  # According to Su et al. (2020)
         resample_freqs = [16000, 8000, 4000]  # According to Su et al. (2020)
         mixed_precision = True
-        validation_every_n_steps = 5000
+        validation_every_n_steps = 10000
         n_validation_steps = 1000
         scheme = {  # According to Su et al. (2020), batch sizes chosen to max out 8GB VRAM
             0: {
