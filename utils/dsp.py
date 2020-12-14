@@ -21,6 +21,7 @@ def load_audio(file, max_seconds=None):
                                always_2d=True)).T
     else:
         audio, _ = sf.read(file, always_2d=True)
+        audio = audio.T
 
     # Randomly chooses channel from signal
     audio = audio[np.random.choice(audio.shape[0]), :]
