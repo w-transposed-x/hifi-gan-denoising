@@ -67,22 +67,12 @@ def dir_walk(path, ext):
     return file_list
 
 
-def parse_data_structure(path, mode, validation=False, speaker_conditioning=True):
+def parse_data_structure(path):
     # Checks if supplied path points to dir or dataframe
     assert path != '', 'Please set your data paths in hparams.py.'
-    assert mode in ['speaker', 'ir', 'noise'], 'Argument  mode  must be "speaker", "ir" or "noise".'
     if os.path.isdir(path):
-        if validation or not speaker_conditioning or mode in ['ir', 'noise']:
-            files = dir_walk(path, ext=('.wav', '.WAV'))
-            df = pd.DataFrame(files, columns=['path'])
-        else:
-            subdirs = [f.path for f in os.scandir(path) if f.is_dir()]
-            assert len(subdirs) > 0, f'No sub-directories for individual speakers found at "{path}".'
-            df = pd.DataFrame(columns=['path', 'sp_id'])
-            for i, subdir in enumerate(subdirs):
-                files = dir_walk(subdir, ext=('.wav', '.WAV'))
-                rows = pd.DataFrame(list(zip(files, [i] * len(files))), columns=['path', 'sp_id'])
-                df = df.append(rows)
+        files = dir_walk(path, ext=('.wav', '.WAV'))
+        df = pd.DataFrame(files, columns=['path'])
         return df
     elif path.endswith('.pkl'):
         df = pd.read_pickle(path)
