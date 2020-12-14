@@ -1,8 +1,9 @@
+from functools import partial
+
 import librosa
 import numpy as np
 import torch
 import torch.nn.functional as F
-from functools import partial
 from torch.utils.data import IterableDataset
 
 import utils as utils
@@ -30,24 +31,8 @@ class ConvDataset(IterableDataset):
             noise_idx = rng.integers(len(self.noise_files))
             noise_file = self.noise_files.iloc[noise_idx]['path']
 
-            # Get speaker conditioning (if enabled)
-            # Augment speaker only in case of all zero conditioning
-            rnd = rng.random()
-            sp_augment_speed = False
-            if hp.training.speaker_conditioning:
-                if rnd > hp.training.chance_for_all_zero_conditioning and not self.validation:
-                    conditioning = self.speaker_conditioning(self.sp_files.iloc[sp_idx]['sp_id'])
-                else:
-                    conditioning = np.zeros(self.n_conditioning_dims)
-                    if not self.validation:
-                        sp_augment_speed = True
-            else:
-                conditioning = None
-                if not self.validation:
-                    sp_augment_speed = True
-
             # Load and augment audio
-            x, h, noise = self.load_and_augment(sp_file, sp_augment_speed, ir_file, noise_file, self.augmentation)
+            x, h, noise = self.load_and_augment(sp_file, False, ir_file, noise_file, self.augmentation)
 
             # Perform convolution
             y = self.convolve(x, h)
@@ -58,24 +43,24 @@ class ConvDataset(IterableDataset):
             # Pad target to be of same length as input
             x = np.pad(x, (0, len(y) - len(x)), 'constant')
 
-            yield x, y, conditioning, sp_file, ir_file
+            yield x, y, sp_file, ir_file
 
     def load_and_augment(self, sp_file, sp_augment_speed, ir_file, noise_file, augmentation):
         rng = np.random.default_rng()
 
         sp_audio = utils.dsp.load_audio(sp_file)
         sp_audio = utils.dsp.trim_speaker(sp_audio)
-        if augmentation:
-            sp_audio = self.augment_sp(sp_audio, sp_augment_speed)
+        # if augmentation:
+        #     sp_audio = self.augment_sp(sp_audio, sp_augment_speed)
 
         rnd = rng.random()
         if rnd > hp.training.chance_for_no_reverb or self.validation:
             ir_audio = utils.dsp.load_audio(ir_file)
             ir_audio = utils.dsp.trim_ir(ir_audio, hp.dsp.sample_rate)
-            if augmentation:
-                # IR augmentation is not to specification, too many unknowns regarding T60 augmentation.
-                # See comment in utils.dsp.apply_t60_augmentation() and project README.
-                ir_audio = self.augment_ir(ir_audio)
+            # if augmentation:
+            # IR augmentation is not to specification, too many unknowns regarding T60 augmentation.
+            # See comment in utils.dsp.apply_t60_augmentation() and project README.
+            # ir_audio = self.augment_ir(ir_audio)
         else:
             ir_audio = np.array([1.0])
         rnd = rng.random()
@@ -192,13 +177,11 @@ def collate(batch):
 
     ground_truth = np.stack(ground_truth).astype(np.float32)
     inputs = np.stack(inputs).astype(np.float32)
-    conditioning = np.stack([x[2] for x in batch]).astype(np.float32)
 
     ground_truth = torch.tensor(ground_truth)
     inputs = torch.tensor(inputs)
-    conditioning = torch.tensor(conditioning)
 
-    return inputs, ground_truth, conditioning
+    return inputs, ground_truth
 
 
 def pad(x):
