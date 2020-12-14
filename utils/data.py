@@ -143,7 +143,7 @@ class ConvDataset(IterableDataset):
             noise = np.tile(noise, n_reps)
 
         max_idx = np.max((len(noise) - len(y), 1))
-        idx = rng.integers(low=0, high=np.max((1, max_idx)))
+        idx = rng.integers(low=0, high=max_idx)
         noise = noise[idx:idx + len(y)]
 
         y_rms = np.std(y)
