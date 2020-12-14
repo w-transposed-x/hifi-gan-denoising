@@ -20,7 +20,11 @@ class hparams:
                 'batch_size': 3,
                 'lr_generator': 1e-3,
                 'lr_discriminator': None,
-                'augmentation': False,
+                'augmentation': {
+                    'speaker': False,
+                    'ir': False,
+                    'noise': True
+                },
             },
             1: {
                 'modules': 'wavenet-postnet',
@@ -28,7 +32,11 @@ class hparams:
                 'batch_size': 3,
                 'lr_generator': 1e-4,
                 'lr_discriminator': None,
-                'augmentation': True,
+                'augmentation': {
+                    'speaker': False,
+                    'ir': False,
+                    'noise': True
+                },
             },
             2: {
                 'modules': 'all',
@@ -36,7 +44,11 @@ class hparams:
                 'batch_size': 2,
                 'lr_generator': 1e-5,
                 'lr_discriminator': 1e-3,
-                'augmentation': True,
+                'augmentation': {
+                    'speaker': False,
+                    'ir': False,
+                    'noise': True
+                },
             }
         }
 
