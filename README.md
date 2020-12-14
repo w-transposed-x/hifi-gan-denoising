@@ -21,12 +21,9 @@ tqdm 4.54.1
 Data for training can be supplied in several ways. In hparams.py (hparams.files), you can specify paths to your data. In
 all cases, paths must point to either a directory containing audio files (.wav) or a .pkl file of a Pandas Dataframe.
 All audio data should have a sample rate of 16kHz or above.  
-**In the case of specifying directories**, IR and noise files can directly be contained in the specified directory.
-Speaker files, if using speaker conditioning according to [Rethage (2018)](https://arxiv.org/abs/1706.07162), must be
-contained in immediate sub-directories of the specified directory, one sub-directory for each individual speaker.  
+**In the case of specifying directories**, files can directly be contained in the specified directory.  
 **In the case specifying .pkl files**, the Dataframe for speakers, IRs and noises must contain a column labeled `path`,
-with paths to audio files as its rows. In the case of speaker files, the Dataframe also has to have a column
-labeled `sp_id` with the speaker ID (as integer) corresponding to the audio file.
+with paths to audio files as its rows.
 
 ### Training
 
