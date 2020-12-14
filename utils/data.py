@@ -104,7 +104,7 @@ class ConvDataset(IterableDataset):
         h = utils.dsp.apply_drr_augmentation(h, random_drr)
 
         # T60 augmentation according to Bryan (2019) does not work reliably
-        # h = utils.dsp.apply_t60_augmentation(h, random_t60, 512)
+        # h = utils.dsp.apply_t60_augmentation(h, random_t60)
 
         # Random band gain factors sampled from normal distribution for gentle EQing,
         # sampling from uniform distribution seemed excessive. No details were provided in the paper.
@@ -143,7 +143,7 @@ class ConvDataset(IterableDataset):
             noise = np.tile(noise, n_reps)
 
         max_idx = np.max((len(noise) - len(y), 1))
-        idx = rng.integers(low=0, high=max_idx)
+        idx = rng.integers(max_idx)
         noise = noise[idx:idx + len(y)]
 
         y_rms = np.std(y)
