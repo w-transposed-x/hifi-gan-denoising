@@ -11,12 +11,12 @@ from hparams import hparams as hp
 
 
 class ConvDataset(IterableDataset):
-    def __init__(self, sp_files, ir_files, noise_files, validation=False, augmentation=False):
+    def __init__(self, sp_files, ir_files, noise_files, augmentation, validation=False):
         self.sp_files = sp_files
         self.ir_files = ir_files
         self.noise_files = noise_files
-        self.validation = validation
         self.augmentation = augmentation
+        self.validation = validation
         self.n_conditioning_dims = hp.model.wavenet.n_conditioning_dims
 
     def __iter__(self):
@@ -32,7 +32,7 @@ class ConvDataset(IterableDataset):
             noise_file = self.noise_files.iloc[noise_idx]['path']
 
             # Load and augment audio
-            x, h, noise = self.load_and_augment(sp_file, False, ir_file, noise_file, self.augmentation)
+            x, h, noise = self.load_and_augment(sp_file, ir_file, noise_file, self.augmentation)
 
             # Perform convolution
             y = self.convolve(x, h)
@@ -45,29 +45,30 @@ class ConvDataset(IterableDataset):
 
             yield x, y, sp_file, ir_file
 
-    def load_and_augment(self, sp_file, sp_augment_speed, ir_file, noise_file, augmentation):
+    def load_and_augment(self, sp_file, ir_file, noise_file, augmentation):
         rng = np.random.default_rng()
 
         sp_audio = utils.dsp.load_audio(sp_file)
         sp_audio = utils.dsp.trim_speaker(sp_audio)
-        # if augmentation:
-        #     sp_audio = self.augment_sp(sp_audio, sp_augment_speed)
+        if augmentation['speaker']:
+            sp_audio = self.augment_sp(sp_audio)
 
         rnd = rng.random()
         if rnd > hp.training.chance_for_no_reverb or self.validation:
             ir_audio = utils.dsp.load_audio(ir_file)
             ir_audio = utils.dsp.trim_ir(ir_audio, hp.dsp.sample_rate)
-            # if augmentation:
-            # IR augmentation is not to specification, too many unknowns regarding T60 augmentation.
-            # See comment in utils.dsp.apply_t60_augmentation() and project README.
-            # ir_audio = self.augment_ir(ir_audio)
+            if augmentation['ir']:
+                # IR augmentation is not to specification, too many unknowns regarding T60 augmentation.
+                # See comment in utils.dsp.apply_t60_augmentation() and project README.
+                ir_audio = self.augment_ir(ir_audio)
         else:
             ir_audio = np.array([1.0])
         rnd = rng.random()
         if rnd > hp.training.chance_for_no_noise or self.validation:
             noise_audio = utils.dsp.load_audio(noise_file)
             # Augments noise in all phases of training, paper was a little fuzzy regarding the exact augment scheme
-            noise_audio = self.augment_noise(noise_audio)
+            if augmentation['noise']:
+                noise_audio = self.augment_noise(noise_audio)
         else:
             noise_audio = None
 
@@ -82,15 +83,14 @@ class ConvDataset(IterableDataset):
         binary = np.asarray([int(i) for i in bin(label)[2:]])
         return np.pad(binary, (self.n_conditioning_dims - len(binary), 0), 'constant')
 
-    def augment_sp(self, x, sp_augment_speed):
+    def augment_sp(self, x):
         # Resamples speaker audio to vary speed if speaker conditioning is all zero.
         # Introduces pitch shift, paper wasn't clear on whether they keep the pitch fixed.
         # Also applies random gain factor.
         rng = np.random.default_rng()
-        if sp_augment_speed:
-            resample_factor = rng.uniform(low=hp.augmentation.sp_resample_factor_bounds[0],
-                                          high=hp.augmentation.sp_resample_factor_bounds[1])
-            x = librosa.core.resample(x, hp.dsp.sample_rate, hp.dsp.sample_rate * resample_factor)
+        resample_factor = rng.uniform(low=hp.augmentation.sp_resample_factor_bounds[0],
+                                      high=hp.augmentation.sp_resample_factor_bounds[1])
+        x = librosa.core.resample(x, hp.dsp.sample_rate, hp.dsp.sample_rate * resample_factor)
         gain_factor = rng.uniform(low=hp.augmentation.sp_gain_factor_bounds[0],
                                   high=hp.augmentation.sp_gain_factor_bounds[0])
         return x * gain_factor

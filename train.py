@@ -128,14 +128,14 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
         train_data = ConvDataset(sp_files=utils.core.parse_data_structure(hp.files.train_speaker, 'speaker'),
                                  ir_files=utils.core.parse_data_structure(hp.files.train_ir, 'ir'),
                                  noise_files=utils.core.parse_data_structure(hp.files.train_noise, 'noise'),
-                                 validation=False,
-                                 augmentation=phase_params['augmentation'])
+                                 augmentation=phase_params['augmentation'],
+                                 validation=False)
         valid_data = ConvDataset(
             sp_files=utils.core.parse_data_structure(hp.files.valid_speaker, 'speaker', validation=True),
             ir_files=utils.core.parse_data_structure(hp.files.valid_ir, 'ir', validation=True),
             noise_files=utils.core.parse_data_structure(hp.files.valid_noise, 'noise', validation=True),
-            validation=True,
-            augmentation=phase_params['augmentation'])
+            augmentation=phase_params['augmentation'],
+            validation=True)
         train_loader = DataLoader(dataset=train_data,
                                   collate_fn=collate,
                                   batch_size=phase_params['batch_size'],
