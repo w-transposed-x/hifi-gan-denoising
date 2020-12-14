@@ -90,8 +90,6 @@ def parse_data_structure(path, mode, validation=False, speaker_conditioning=True
             raise IOError(f'"{path}" does not point to a valid pandas DataFrame.')
         if 'path' not in df.columns:
             raise Exception(f'DataFrame at "{path}" does not contain required column "path".')
-        if not validation and speaker_conditioning and 'sp_id' not in df.columns and mode == 'speaker':
-            raise Exception(f'DataFrame at "{path}" does not contain required column "sp_id".')
         return df
     else:
         raise IOError(f'Argument  path  must point to directory or pickled DataFrame, but points to "{path}".')
