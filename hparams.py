@@ -116,9 +116,9 @@ class hparams:
             hop_length = [512, 128]
 
     class files:
-        train_speaker = '/home/dluser/projects/hifi-gan/NSC_cut'
-        valid_speaker = '/Volumes/Data/datasets/Speaker/Audiobooks/cut_2.0'
-        train_ir = '/home/dluser/projects/hifi-gan/ir_clean.pkl'
-        valid_ir = '/home/dluser/projects/hifi-gan/ir_clean.pkl'
-        train_noise = '/home/dluser/projects/hifi-gan/noises'
-        valid_noise = '/home/dluser/projects/hifi-gan/noises'
+        train_speaker = ''
+        valid_speaker = ''
+        train_ir = ''
+        valid_ir = ''
+        train_noise = ''
+        valid_noise = ''
