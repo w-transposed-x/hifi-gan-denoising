@@ -48,7 +48,7 @@ class ConvDataset(IterableDataset):
     def load_and_augment(self, sp_file, ir_file, noise_file, augmentation):
         rng = np.random.default_rng()
 
-        sp_audio = utils.dsp.load_audio(sp_file)
+        sp_audio = utils.dsp.load_audio(sp_file, max_seconds=3)
         sp_audio = utils.dsp.trim_speaker(sp_audio)
         if augmentation['speaker']:
             sp_audio = self.augment_sp(sp_audio)
@@ -142,7 +142,7 @@ class ConvDataset(IterableDataset):
             n_reps = int(np.ceil(len(y) / len(noise)))
             noise = np.tile(noise, n_reps)
 
-        max_idx = len(noise) - len(y)
+        max_idx = np.max((len(noise) - len(y), 1))
         idx = rng.integers(max_idx)
         noise = noise[idx:idx + len(y)]
 

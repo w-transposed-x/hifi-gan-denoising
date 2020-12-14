@@ -8,16 +8,19 @@ from hparams import hparams as hp
 from utils.filter import filterbank
 
 
-def load_audio(file):
+def load_audio(file, max_seconds=None):
     # Instead of loading audio as mono, a random channel is chosen since
     # some IR files might have a large number of channels.
     info = sf.info(file)
-    rng = np.random.default_rng()
-    start = rng.integers(low=0, high=np.max((int(info.frames - 3 * info.samplerate), 1)))
-    audio = next(sf.blocks(file=file,
-                           blocksize=3 * info.samplerate,
-                           start=start,
-                           always_2d=True)).T
+    if max_seconds is not None:
+        rng = np.random.default_rng()
+        start = rng.integers(low=0, high=np.max((int(info.frames - max_seconds * info.samplerate), 1)))
+        audio = next(sf.blocks(file=file,
+                               blocksize=max_seconds * info.samplerate,
+                               start=start,
+                               always_2d=True)).T
+    else:
+        audio = sf.read(file, always_2d=True)
 
     # Randomly chooses channel from signal
     audio = audio[np.random.choice(audio.shape[0]), :]
