@@ -1,5 +1,6 @@
 import librosa
 import numpy as np
+import soundfile as sf
 from scipy import linalg, optimize, stats
 from scipy.signal import hilbert
 
@@ -10,16 +11,18 @@ from utils.filter import filterbank
 def load_audio(file):
     # Instead of loading audio as mono, a random channel is chosen since
     # some IR files might have a large number of channels.
-    audio, sr = librosa.core.load(file, sr=None, mono=False)
-
-    # Checks if audio is multi-channel, adds channel dim if not
-    if len(np.shape(audio)) == 1:
-        audio = audio[None, :]
+    info = sf.info(file)
+    rng = np.random.default_rng()
+    start = rng.integers(low=0, high=np.max((int(info.frames - 3 * hp.dsp.sample_rate), 0)))
+    audio = next(sf.blocks(file=file,
+                           blocksize=3 * info.samplerate,
+                           start=start,
+                           always_2d=True)).T
 
     # Randomly chooses channel from signal
     audio = audio[np.random.choice(audio.shape[0]), :]
-    if sr > hp.dsp.sample_rate:
-        audio = librosa.core.resample(audio, sr, hp.dsp.sample_rate)
+    if info.samplerate > hp.dsp.sample_rate:
+        audio = librosa.core.resample(audio, info.samplerate, hp.dsp.sample_rate)
 
     # Removes DC offset if signal appears to be recorded audio (as opposed to synthetic IRs e.g.)
     if not all(audio >= 0.):
