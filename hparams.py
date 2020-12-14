@@ -66,7 +66,7 @@ class hparams:
         ir_drr_bounds_db = [-6, 18]  # According to Bryan (2019)
         ir_rand_eq_mean_std_db = [0, 1.5]  # Own choice, paper was inconclusive
         noise_rand_eq_limits_db = [-12, 6]  # Own choice, paper was inconclusive
-        noise_rand_snr_bounds_db = [10, 30]  # According to Bryan (2019)
+        noise_rand_snr_bounds_db = [20, 40]  # According to Bryan (2019)
 
     class model:
         class postnet:  # According to Su et al. (2020)
@@ -116,9 +116,9 @@ class hparams:
             hop_length = [512, 128]
 
     class files:
-        train_speaker = ''
-        valid_speaker = ''
-        train_ir = ''
-        valid_ir = ''
-        train_noise = ''
-        valid_noise = ''
+        train_speaker = '/home/dluser/projects/hifi-gan/NSC_cut'
+        valid_speaker = '/Volumes/Data/datasets/Speaker/Audiobooks/cut_2.0'
+        train_ir = '/home/dluser/projects/hifi-gan/ir_clean.pkl'
+        valid_ir = '/home/dluser/projects/hifi-gan/ir_clean.pkl'
+        train_noise = '/home/dluser/projects/hifi-gan/noises'
+        valid_noise = '/home/dluser/projects/hifi-gan/noises'

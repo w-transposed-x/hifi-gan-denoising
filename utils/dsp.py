@@ -13,7 +13,7 @@ def load_audio(file):
     # some IR files might have a large number of channels.
     info = sf.info(file)
     rng = np.random.default_rng()
-    start = rng.integers(low=0, high=np.max((int(info.frames - 3 * info.samplerate), 0)))
+    start = rng.integers(low=0, high=np.max((int(info.frames - 3 * info.samplerate), 1)))
     audio = next(sf.blocks(file=file,
                            blocksize=3 * info.samplerate,
                            start=start,
