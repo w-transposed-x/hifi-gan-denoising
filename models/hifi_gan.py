@@ -87,28 +87,18 @@ class SpecGANBlock(nn.Module):
         pW = int(((stride[1] - 1) * np.ceil(hp.training.sequence_length / hp.model.specgan.n_mels)
                   - stride[1] + kernel_size[1]) / 2)
         self.in_conv = nn.Conv2d(in_channels=in_channels,
-                                 out_channels=hp.model.specgan.n_channels,
+                                 out_channels=2 * hp.model.specgan.n_channels,
                                  kernel_size=kernel_size,
                                  stride=stride,
                                  padding=(pH, pW),
                                  bias=False)  # bias = False since it's immediately followed by BatchNorm
-        self.norm = nn.BatchNorm2d(hp.model.specgan.n_channels)
-        # Original paper did not specify hyper parameters of GLU conv layers so we chose 1x1 convolutions.
-        # Some implementations used only one conv layer (here: self.in_conv) and split its output along channel dims.
-        self.gate = nn.Conv2d(in_channels=hp.model.specgan.n_channels,
-                              out_channels=hp.model.specgan.n_channels,
-                              kernel_size=(1, 1),
-                              bias=True)
-        self.out_conv = nn.Conv2d(in_channels=hp.model.specgan.n_channels,
-                                  out_channels=hp.model.specgan.n_channels,
-                                  kernel_size=(1, 1),
-                                  bias=True)
+        self.norm = nn.BatchNorm2d(2 * hp.model.specgan.n_channels)
 
     def forward(self, x):
         x = self.in_conv(x)
         x = self.norm(x)
-        x = self.out_conv(x) * torch.sigmoid(self.gate(x))
-        return x
+        a, b = torch.split(x, hp.model.specgan.n_channels, dim=1)
+        return a * torch.sigmoid(b)
 
 
 class SpecGAN(nn.Module):
