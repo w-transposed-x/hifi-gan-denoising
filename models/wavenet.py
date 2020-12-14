@@ -13,21 +13,16 @@ class ResLayer(nn.Module):
                                       stride=1,
                                       padding=padding,
                                       dilation=dilation,
-                                      bias=not hp.training.speaker_conditioning)
-
-        if hp.training.speaker_conditioning:
-            self.bias = nn.Linear(hp.model.wavenet.n_conditioning_dims, 1)
+                                      bias=True)
 
         self.conv_1x1 = nn.Conv1d(in_channels=hp.model.wavenet.n_channels_dilated,
                                   out_channels=hp.model.wavenet.n_channels_dilated * 2,
                                   kernel_size=1,
                                   bias=True)
 
-    def forward(self, x, conditioning):
+    def forward(self, x):
         res = x
         x = self.conv_dilated(x)
-        if hp.training.speaker_conditioning:
-            x += torch.stack(x.shape[1] * [self.bias(conditioning)], dim=1)
         a, b = x.split(x.shape[1] // 2, dim=1)
         x = torch.tanh(a) * torch.sigmoid(b)
         x = self.conv_1x1(x)
@@ -48,10 +43,10 @@ class ContextStacks(nn.Module):
                     ResLayer(padding, dilation)
                 )
 
-    def forward(self, x, conditioning):
+    def forward(self, x):
         skip_outs = []
         for dilation_layer in self.dilation_layers:
-            x, s = dilation_layer(x, conditioning)
+            x, s = dilation_layer(x)
             skip_outs.append(s)
         return torch.relu(torch.sum(torch.stack(skip_outs), dim=0))
 
@@ -88,12 +83,12 @@ class WaveNet(nn.Module):
                                  padding=0,
                                  bias=True)
 
-    def forward(self, x, conditioning):
+    def forward(self, x):
         if len(x.shape) == 2 and x.shape[1] == hp.training.sequence_length:
             x = x.unsqueeze(1)
 
         x = self.in_conv(x)
-        x = self.stacks(x, conditioning)
+        x = self.stacks(x)
         x = torch.relu(self.out_conv_1(x))
         x = self.out_conv_2(x)
         return self.out_1x1(x)

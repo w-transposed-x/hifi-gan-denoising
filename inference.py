@@ -1,7 +1,8 @@
 import argparse
+import os
+
 import librosa
 import numpy as np
-import os
 import soundfile as sf
 import torch
 from torch.cuda.amp import autocast
@@ -33,9 +34,6 @@ if __name__ == '__main__':
 
     # Load checkpoint
     checkpoint = torch.load(args.checkpoint, map_location=args.device)
-
-    # Set number of conditioning dims
-    hp.model.wavenet.n_conditioning_dims = checkpoint['n_conditioning_dims']
 
     # Initializing model, optimizer, criterion and scaler
     model = Generator(wavenet=WaveNet())

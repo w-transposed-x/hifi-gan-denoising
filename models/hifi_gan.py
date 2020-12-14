@@ -143,8 +143,8 @@ class Generator(nn.Module):
         self.wavenet = wavenet
         self.postnet = PostNet()
 
-    def forward(self, x, conditioning):
-        prediction = self.wavenet(x, conditioning)
+    def forward(self, x):
+        prediction = self.wavenet(x)
         return prediction, self.postnet(prediction)
 
     def inference(self, x):
@@ -152,7 +152,7 @@ class Generator(nn.Module):
             x = x[None, None, :]
         else:
             x = x[:, None, :]
-        _, y = self.forward(x, torch.zeros(1, self.wavenet.n_conditioning_dims).to(x.device))
+        _, y = self.forward(x)
         return y.squeeze()
 
 
@@ -169,10 +169,10 @@ class HiFiGAN(nn.Module):
             SpecGAN()
         )
 
-    def forward(self, x, ground_truth, conditioning):
+    def forward(self, x, ground_truth):
         x = x[:, None, :]
         ground_truth = ground_truth[:, None, :]
-        prediction, prediction_postnet = self.generator(x, conditioning)
+        prediction, prediction_postnet = self.generator(x)
         ground_truth_scores = []
         prediction_scores = []
         L_FM_G = []

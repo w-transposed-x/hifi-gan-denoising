@@ -1,10 +1,10 @@
-import numpy as np
 import os
-import pandas as pd
 import time
+from importlib import util
+
+import pandas as pd
 import torch
 import torch.distributed
-from importlib import util
 
 
 def import_module(path):
@@ -65,25 +65,6 @@ def dir_walk(path, ext):
                  if name.endswith(ext)
                  and not name.startswith('.')]
     return file_list
-
-
-def get_num_conditioning_dims(path):
-    # Calculates number of conditioning dimensions based on speaker data before model initialization
-    if os.path.isdir(path):
-        num_speakers = len([f.path for f in os.scandir(path) if f.is_dir()])
-        return int(np.max((np.ceil(np.log2(num_speakers)), 1)))
-    elif path.endswith('.pkl'):
-        df = pd.read_pickle(path)
-        if not isinstance(df, pd.DataFrame):
-            raise IOError(f'"{path}" does not point to a valid pandas DataFrame.')
-        if 'path' not in df.columns:
-            raise Exception(f'DataFrame under "{path}" does not contain required column "path".')
-        if 'sp_id' not in df.columns:
-            raise Exception(f'DataFrame under "{path}" does not contain required column "sp_id".')
-        num_speakers = len(df['sp_id'].unique())
-        return int(np.max((np.ceil(np.log2(num_speakers)), 1)))
-    else:
-        raise IOError(f'Argument  path  must point to directory or pickled DataFrame.')
 
 
 def parse_data_structure(path, mode, validation=False, speaker_conditioning=True):

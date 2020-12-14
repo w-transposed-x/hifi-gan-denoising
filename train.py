@@ -1,6 +1,7 @@
 import argparse
-import numpy as np
 import os
+
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.cuda.amp import autocast
@@ -23,19 +24,18 @@ def validation(model, criterion, valid_loader, process_group, current_phase):
     model.eval()
     with torch.no_grad():
         with tqdm(desc='Valid', total=hp.training.n_validation_steps) as pbar:
-            for inputs, ground_truth, conditioning in valid_loader:
+            for inputs, ground_truth in valid_loader:
 
                 if pbar.n >= hp.training.n_validation_steps:
                     break
 
                 inputs = inputs.to(args.local_rank, non_blocking=True)
                 ground_truth = ground_truth.to(args.local_rank, non_blocking=True)
-                conditioning = conditioning.to(args.local_rank, non_blocking=True)
 
                 with autocast(enabled=hp.training.mixed_precision):
                     if current_phase == 0:
 
-                        prediction = utils.core.ddp(model).generator.wavenet(inputs, conditioning)
+                        prediction = utils.core.ddp(model).generator.wavenet(inputs)
                         wavenet_loss = criterion.sample_loss(ground_truth, prediction) + criterion.spectrogram_loss(
                             ground_truth, prediction)
 
@@ -50,7 +50,7 @@ def validation(model, criterion, valid_loader, process_group, current_phase):
 
                     elif current_phase == 1:
 
-                        prediction, prediction_postnet = utils.core.ddp(model).generator(inputs, conditioning)
+                        prediction, prediction_postnet = utils.core.ddp(model).generator(inputs)
                         wavenet_loss = criterion.sample_loss(ground_truth, prediction) + criterion.spectrogram_loss(
                             ground_truth, prediction)
                         wavenet_postnet_loss = criterion.sample_loss(ground_truth, prediction_postnet) \
@@ -71,7 +71,7 @@ def validation(model, criterion, valid_loader, process_group, current_phase):
                     else:
 
                         prediction, prediction_postnet, prediction_scores, \
-                        discriminator_scores, L_FM_G = model(inputs, ground_truth, conditioning)
+                        discriminator_scores, L_FM_G = model(inputs, ground_truth)
 
                         _, wavenet_loss, wavenet_postnet_loss, \
                         G_loss, D_losses = criterion(pbar.n, ground_truth, prediction, prediction_postnet,
@@ -149,7 +149,7 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
 
         with tqdm(desc=f'Train {phase_params["modules"]}', total=phase_params['steps']) as pbar:
             pbar.update(step)
-            for inputs, ground_truth, conditioning in train_loader:
+            for inputs, ground_truth in train_loader:
 
                 model.train()
 
@@ -158,14 +158,13 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
 
                 inputs = inputs.to(args.local_rank, non_blocking=True)
                 ground_truth = ground_truth.to(args.local_rank, non_blocking=True)
-                conditioning = conditioning.to(args.local_rank, non_blocking=True)
 
                 training_loss = dict()
 
                 with autocast(enabled=hp.training.mixed_precision):
                     if current_phase == 0:
 
-                        prediction = utils.core.ddp(model).generator.wavenet(inputs, conditioning)
+                        prediction = utils.core.ddp(model).generator.wavenet(inputs)
                         loss = criterion.sample_loss(ground_truth, prediction) + criterion.spectrogram_loss(
                             ground_truth, prediction)
 
@@ -173,7 +172,7 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
 
                     elif current_phase == 1:
 
-                        prediction, prediction_postnet = utils.core.ddp(model).generator(inputs, conditioning)
+                        prediction, prediction_postnet = utils.core.ddp(model).generator(inputs)
                         wavenet_loss = criterion.sample_loss(ground_truth, prediction) + criterion.spectrogram_loss(
                             ground_truth, prediction)
                         wavenet_postnet_loss = criterion.sample_loss(ground_truth, prediction_postnet) \
@@ -186,7 +185,7 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
                     else:
 
                         prediction, prediction_postnet, prediction_scores, \
-                        discriminator_scores, L_FM_G = model(inputs, ground_truth, conditioning)
+                        discriminator_scores, L_FM_G = model(inputs, ground_truth)
 
                         loss, wavenet_loss, wavenet_postnet_loss, \
                         G_loss, D_losses = criterion(pbar.n, ground_truth, prediction, prediction_postnet,
@@ -264,10 +263,6 @@ if __name__ == '__main__':
     torch.cuda.set_device(args.local_rank)
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
     process_group = torch.distributed.new_group([i for i in range(torch.cuda.device_count())], backend='nccl')
-
-    # Set number of conditioning dims
-    if hp.training.speaker_conditioning:
-        hp.model.wavenet.n_conditioning_dims = utils.core.get_num_conditioning_dims(hp.files.train_speaker)
 
     # Initializing model, optimizer, criterion and scaler
     model = HiFiGAN(generator=WaveNet())
