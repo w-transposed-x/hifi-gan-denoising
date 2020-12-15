@@ -110,12 +110,11 @@ def validation(model, criterion, valid_loader, process_group, current_phase):
 def training(model, optimizer, criterion, scaler, logger, process_group, run_dir):
     global phase, step
 
-    step_offset = 0
 
     for current_phase, phase_params in hp.training.scheme.items():
         if current_phase < phase:
-            step_offset += phase_params['steps']
             continue
+        step_offset = sum([params['steps'] for i, params in hp.training.scheme.items() if i < current_phase])
 
         # Update learning rate
         for param_group in optimizer['generator'].param_groups:
