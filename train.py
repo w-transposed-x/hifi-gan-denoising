@@ -23,7 +23,7 @@ def validation(model, criterion, valid_loader, process_group, current_phase):
 
     model.eval()
     with torch.no_grad():
-        with tqdm(desc='Valid', total=hp.training.n_validation_steps, disable=args.local_rank != 0) as pbar:
+        with tqdm(desc='Valid', total=hp.training.n_validation_steps) as pbar:
             for inputs, ground_truth in valid_loader:
 
                 if pbar.n >= hp.training.n_validation_steps:
@@ -146,8 +146,7 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
                                   num_workers=hp.training.num_workers,
                                   pin_memory=False)
 
-        with tqdm(desc=f'Train {phase_params["modules"]}', total=phase_params['steps'],
-                  disable=args.local_rank != 0) as pbar:
+        with tqdm(desc=f'Train {phase_params["modules"]}', total=phase_params['steps']) as pbar:
             pbar.update(step)
             for inputs, ground_truth in train_loader:
 
