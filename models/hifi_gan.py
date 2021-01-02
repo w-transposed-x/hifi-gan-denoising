@@ -160,12 +160,12 @@ class HiFiGAN(nn.Module):
     def __init__(self, generator):
         super(HiFiGAN, self).__init__()
         self.generator = Generator(generator)
-        self.disriminators = nn.ModuleList()
+        self.discriminators = nn.ModuleList()
         for resample_freq in hp.training.resample_freqs:
-            self.disriminators.append(
+            self.discriminators.append(
                 WaveGAN(resample_freq)
             )
-        self.disriminators.append(
+        self.discriminators.append(
             SpecGAN()
         )
 
@@ -176,8 +176,8 @@ class HiFiGAN(nn.Module):
         ground_truth_scores = []
         prediction_scores = []
         L_FM_G = []
-        for disriminator in self.disriminators:
-            ground_truth_score, prediction_score, L = disriminator(ground_truth, prediction)
+        for discriminator in self.discriminators:
+            ground_truth_score, prediction_score, L = discriminator(ground_truth, prediction)
             ground_truth_scores.append(ground_truth_score)
             prediction_scores.append(prediction_score)
             L_FM_G.append(L)

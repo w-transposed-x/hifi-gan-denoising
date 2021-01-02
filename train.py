@@ -268,7 +268,7 @@ if __name__ == '__main__':
     model.cuda(args.local_rank)
     optimizer = {
         'generator': torch.optim.Adam(model.generator.parameters()),
-        'discriminator': torch.optim.Adam(model.disriminators.parameters())
+        'discriminator': torch.optim.Adam(model.discriminators.parameters())
     }
     criterion = CombinedLoss(args.local_rank)
     scaler = {
