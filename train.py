@@ -136,12 +136,12 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
         train_loader = DataLoader(dataset=train_data,
                                   collate_fn=collate,
                                   batch_size=phase_params['batch_size'],
-                                  num_workers=hp.training.num_workers,
+                                  num_workers=hp.training.num_workers if not args.dev else 0,
                                   pin_memory=True)
         valid_loader = DataLoader(dataset=valid_data,
                                   collate_fn=collate,
                                   batch_size=phase_params['batch_size'],
-                                  num_workers=hp.training.num_workers,
+                                  num_workers=hp.training.num_workers if not args.dev else 0,
                                   pin_memory=False)
 
         with tqdm(desc=f'Train {phase_params["modules"]}', total=phase_params['steps']) as pbar:
@@ -198,7 +198,8 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
                         training_loss['D_4kHz'] = D_losses[2].item()
                         training_loss['D_mel'] = D_losses[3].item()
 
-                # loss = utils.core.all_reduce(loss, group=process_group)
+                if not args.dev:
+                    loss = utils.core.all_reduce(loss, group=process_group)
 
                 optimizer.zero_grad()
 
@@ -246,14 +247,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train HiFiGAN')
     parser.add_argument('--checkpoint', default=None, type=str, help='Checkpoint file to continue training from.')
     parser.add_argument('--local_rank', default=0, type=int, help='Is set automatically by torch.distributed.launch')
+    parser.add_argument('--dev', action='store_true', help='Run script without multi-GPU for debugging.')
     args = parser.parse_args()
-    args.local_rank = 0
+    if args.dev:
+        args.local_rank = 0
 
     # DDP setup
     torch.cuda.set_device(args.local_rank)
-    # torch.distributed.init_process_group(backend='nccl', init_method='env://')
-    # process_group = torch.distributed.new_group([i for i in range(torch.cuda.device_count())], backend='nccl')
-    process_group = None
+    if not args.dev:
+        torch.distributed.init_process_group(backend='nccl', init_method='env://')
+        process_group = torch.distributed.new_group([i for i in range(torch.cuda.device_count())], backend='nccl')
+    else:
+        process_group = None
 
     # Initializing model, optimizer, criterion and scaler
     model = HiFiGAN(generator=WaveNet())
@@ -267,10 +272,11 @@ if __name__ == '__main__':
     scaler = torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None
 
     # Wrap model in DDP
-    # model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model, process_group)
-    # model = torch.nn.parallel.DistributedDataParallel(model,
-    #                                                   device_ids=[args.local_rank],
-    #                                                   output_device=args.local_rank)
+    if not args.dev:
+        model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model, process_group)
+        model = torch.nn.parallel.DistributedDataParallel(model,
+                                                          device_ids=[args.local_rank],
+                                                          output_device=args.local_rank)
 
     # Load parameters from checkpoint to resume training
     if args.checkpoint is not None:
@@ -284,8 +290,7 @@ if __name__ == '__main__':
     else:
         phase = 0
         step = 0
-        # run_dir = utils.core.get_run_dir(process_group, args.local_rank)
-        run_dir = ''
+        run_dir = utils.core.get_run_dir(process_group, args.local_rank) if not args.dev else ''
 
     # Initializing logger
     logger = Logger(os.path.join(run_dir, 'logs')) if args.local_rank == 0 else None
