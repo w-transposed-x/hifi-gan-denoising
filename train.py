@@ -290,7 +290,7 @@ if __name__ == '__main__':
     else:
         phase = 0
         step = 0
-        run_dir = utils.core.get_run_dir(process_group, args.local_rank) if not args.dev else ''
+        run_dir = utils.core.get_run_dir(process_group, args.local_rank, args.dev)
 
     # Initializing logger
     logger = Logger(os.path.join(run_dir, 'logs')) if args.local_rank == 0 else None

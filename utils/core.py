@@ -14,23 +14,25 @@ def import_module(path):
     return module
 
 
-def get_run_dir(process_group, rank):
+def get_run_dir(process_group, rank, dev):
     # Makes sure that only one process creates folders in multi-gpu setup
     if rank == 0:
         now = time.strftime("%Y-%m-%d__%H_%M_%S", time.localtime())
         run_dir = os.path.join('runs', now)
         os.makedirs(os.path.join(run_dir, 'checkpoints'), exist_ok=True)
         os.makedirs(os.path.join(run_dir, 'logs'), exist_ok=True)
-        with open('tmp', 'w') as fp:
-            fp.write(run_dir)
+        if not dev:
+            with open('tmp', 'w') as fp:
+                fp.write(run_dir)
 
-    torch.distributed.barrier(process_group)
+    if not dev:
+        torch.distributed.barrier(process_group)
 
-    # Syncs run directory between processes
-    with open('tmp', 'r') as fp:
-        run_dir = fp.readline()
-    if rank == 0:
-        os.remove('tmp')
+        # Syncs run directory between processes
+        with open('tmp', 'r') as fp:
+            run_dir = fp.readline()
+        if rank == 0:
+            os.remove('tmp')
 
     return run_dir
 
