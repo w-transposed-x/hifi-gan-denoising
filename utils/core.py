@@ -39,11 +39,8 @@ def save_checkpoint(run_dir, model, optimizer, scaler, phase, step):
     pt = {
         'model_state_dict': model.state_dict(),
         'generator_state_dict': model.generator.state_dict(),
-        'optimizer_generator_state_dict': optimizer['generator'].state_dict(),
-        'optimizer_discriminator_state_dict': optimizer['discriminator'].state_dict(),
-        'scaler_generator_state_dict': scaler['generator'].state_dict() if scaler['generator'] is not None else None,
-        'scaler_discriminator_state_dict': scaler['discriminator'].state_dict() if scaler[
-                                                                                       'discriminator'] is not None else None,
+        'optimizer_state_dict': optimizer.state_dict(),
+        'scaler_state_dict': scaler.state_dict() if scaler is not None else None,
         'n_conditioning_dims': model.generator.wavenet.n_conditioning_dims,
         'phase': phase,
         'step': step,

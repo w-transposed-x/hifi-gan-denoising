@@ -258,20 +258,12 @@ if __name__ == '__main__':
     # Initializing model, optimizer, criterion and scaler
     model = HiFiGAN(generator=WaveNet())
     model.cuda(args.local_rank)
-    # optimizer = {
-    #     'generator': torch.optim.Adam(model.generator.parameters()),
-    #     'discriminator': torch.optim.Adam(model.discriminators.parameters())
-    # }
     optimizer = torch.optim.Adam([
         {'params': model.generator.wavenet.parameters()},
         {'params': model.generator.postnet.parameters()},
         {'params': model.discriminators.parameters()}
     ])
     criterion = CombinedLoss(args.local_rank)
-    # scaler = {
-    #     'generator': torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None,
-    #     'discriminator': torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None,
-    # }
     scaler = torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None
 
     # Wrap model in DDP
@@ -285,10 +277,8 @@ if __name__ == '__main__':
         run_dir = os.path.dirname(os.path.dirname(args.checkpoint))
         checkpoint = torch.load(args.checkpoint, map_location=f'cuda:{args.local_rank}')
         utils.core.ddp(model).load_state_dict(checkpoint['model_state_dict'])
-        optimizer['generator'].load_state_dict(checkpoint['optimizer_generator_state_dict'])
-        optimizer['discriminator'].load_state_dict(checkpoint['optimizer_discriminator_state_dict'])
-        scaler['generator'].load_state_dict(checkpoint['scaler_generator_state_dict'])
-        scaler['discriminator'].load_state_dict(checkpoint['scaler_discriminator_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scaler.load_state_dict(checkpoint['scaler_state_dict'])
         phase = checkpoint['phase']
         step = checkpoint['step']
     else:
