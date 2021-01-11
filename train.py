@@ -117,11 +117,9 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
         step_offset = sum([params['steps'] for i, params in hp.training.scheme.items() if i < current_phase])
 
         # Update learning rate
-        for param_group in optimizer['generator'].param_groups:
-            param_group['lr'] = phase_params['lr_generator']
+        optimizer.param_groups[0]['lr'] = optimizer.param_groups[1]['lr'] = phase_params['lr_generator']
         if phase_params['lr_discriminator'] is not None:
-            for param_group in optimizer['discriminator'].param_groups:
-                param_group['lr'] = phase_params['lr_discriminator']
+            optimizer.param_groups[2]['lr'] = phase_params['lr_discriminator']
 
         # Initialize data loaders
         train_data = ConvDataset(sp_files=utils.core.parse_data_structure(hp.files.train_speaker),
@@ -200,28 +198,20 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
                         training_loss['D_4kHz'] = D_losses[2].item()
                         training_loss['D_mel'] = D_losses[3].item()
 
-                loss = utils.core.all_reduce(loss, group=process_group)
+                # loss = utils.core.all_reduce(loss, group=process_group)
+
+                optimizer.zero_grad()
 
                 if hp.training.mixed_precision:
-                    scaler['generator'].scale(loss).backward(retain_graph=current_phase == 2)
-                    if current_phase == 2:
-                        scaler['discriminator'].scale(loss).backward()
+                    scaler.scale(loss).backward()
                 else:
                     loss.backward()
 
                 if hp.training.mixed_precision:
-                    scaler['generator'].step(optimizer['generator'])
-                    scaler['generator'].update()
-                    if current_phase == 2:
-                        scaler['discriminator'].step(optimizer['discriminator'])
-                        scaler['discriminator'].update()
+                    scaler.step(optimizer)
+                    scaler.update()
                 else:
-                    optimizer['generator'].step()
-                    if current_phase == 2:
-                        optimizer['discriminator'].step()
-
-                optimizer['generator'].zero_grad()
-                optimizer['discriminator'].zero_grad()
+                    optimizer.step()
 
                 pbar.set_postfix(loss=training_loss)
                 pbar.update()
@@ -257,30 +247,38 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint', default=None, type=str, help='Checkpoint file to continue training from.')
     parser.add_argument('--local_rank', default=0, type=int, help='Is set automatically by torch.distributed.launch')
     args = parser.parse_args()
+    args.local_rank = 0
 
     # DDP setup
     torch.cuda.set_device(args.local_rank)
-    torch.distributed.init_process_group(backend='nccl', init_method='env://')
-    process_group = torch.distributed.new_group([i for i in range(torch.cuda.device_count())], backend='nccl')
+    # torch.distributed.init_process_group(backend='nccl', init_method='env://')
+    # process_group = torch.distributed.new_group([i for i in range(torch.cuda.device_count())], backend='nccl')
+    process_group = None
 
     # Initializing model, optimizer, criterion and scaler
     model = HiFiGAN(generator=WaveNet())
     model.cuda(args.local_rank)
-    optimizer = {
-        'generator': torch.optim.Adam(model.generator.parameters()),
-        'discriminator': torch.optim.Adam(model.discriminators.parameters())
-    }
+    # optimizer = {
+    #     'generator': torch.optim.Adam(model.generator.parameters()),
+    #     'discriminator': torch.optim.Adam(model.discriminators.parameters())
+    # }
+    optimizer = torch.optim.Adam([
+        {'params': model.generator.wavenet.parameters()},
+        {'params': model.generator.postnet.parameters()},
+        {'params': model.discriminators.parameters()}
+    ])
     criterion = CombinedLoss(args.local_rank)
-    scaler = {
-        'generator': torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None,
-        'discriminator': torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None,
-    }
+    # scaler = {
+    #     'generator': torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None,
+    #     'discriminator': torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None,
+    # }
+    scaler = torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None
 
     # Wrap model in DDP
-    model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model, process_group)
-    model = torch.nn.parallel.DistributedDataParallel(model,
-                                                      device_ids=[args.local_rank],
-                                                      output_device=args.local_rank)
+    # model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model, process_group)
+    # model = torch.nn.parallel.DistributedDataParallel(model,
+    #                                                   device_ids=[args.local_rank],
+    #                                                   output_device=args.local_rank)
 
     # Load parameters from checkpoint to resume training
     if args.checkpoint is not None:
@@ -296,7 +294,8 @@ if __name__ == '__main__':
     else:
         phase = 0
         step = 0
-        run_dir = utils.core.get_run_dir(process_group, args.local_rank)
+        # run_dir = utils.core.get_run_dir(process_group, args.local_rank)
+        run_dir = ''
 
     # Initializing logger
     logger = Logger(os.path.join(run_dir, 'logs')) if args.local_rank == 0 else None
