@@ -6,25 +6,16 @@ from hparams import hparams as hp
 
 
 class L_Adv_G():
-    def __init__(self):
-        pass
-
     def __call__(self, prediction_score):
         return torch.clamp(1 - prediction_score, min=0)
 
 
 class L_Dk():
-    def __init__(self):
-        pass
-
     def __call__(self, ground_truth_score, prediction_score):
         return torch.clamp(1 + prediction_score, min=0) + torch.clamp(1 - ground_truth_score, min=0)
 
 
 class SampleLoss():
-    def __init__(self):
-        pass
-
     def __call__(self, ground_truth, prediction):
         ground_truth = ground_truth.squeeze()
         prediction = prediction.squeeze()
