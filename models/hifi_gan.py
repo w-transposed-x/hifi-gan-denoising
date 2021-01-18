@@ -11,16 +11,25 @@ class PostNet(nn.Module):
     def __init__(self):
         super(PostNet, self).__init__()
         self.layers = nn.ModuleList()
-        for i in range(hp.model.postnet.n_layers):
+        for i in range(hp.model.postnet.n_layers - 1):
             in_channels = 1 if i == 0 else hp.model.postnet.n_channels
-            out_channels = hp.model.postnet.n_channels if i < (hp.model.postnet.n_layers - 1) else 1
             self.layers.append(
-                nn.Conv1d(in_channels=in_channels,
-                          out_channels=out_channels,
-                          kernel_size=hp.model.postnet.kernel_size,
-                          padding=hp.model.postnet.kernel_size // 2,
-                          bias=True)
+                nn.Sequential(
+                    nn.Conv1d(in_channels=in_channels,
+                              out_channels=hp.model.postnet.n_channels,
+                              kernel_size=hp.model.postnet.kernel_size,
+                              padding=hp.model.postnet.kernel_size // 2,
+                              bias=True),
+                    nn.BatchNorm1d(hp.model.postnet.n_channels)
+                )
             )
+        self.layers.append(
+            nn.Conv1d(in_channels=hp.model.postnet.n_channels,
+                      out_channels=1,
+                      kernel_size=hp.model.postnet.kernel_size,
+                      padding=hp.model.postnet.kernel_size // 2,
+                      bias=True)
+        )
 
     def forward(self, prediction):
         for i, layer in enumerate(self.layers):
