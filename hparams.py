@@ -18,7 +18,8 @@ class hparams:
                 'modules': 'wavenet',
                 'steps': 500000,
                 'batch_size': 3,
-                'lr_generator': 1e-3,
+                'lr_wavenet': 1e-3,
+                'lr_wavenet-postnet': None,
                 'lr_discriminator': None,
                 'augmentation': {
                     'speaker': False,
@@ -30,7 +31,8 @@ class hparams:
                 'modules': 'wavenet-postnet',
                 'steps': 500000,
                 'batch_size': 3,
-                'lr_generator': 1e-4,
+                'lr_wavenet': 1e-4,
+                'lr_wavenet-postnet': 1e-5,
                 'lr_discriminator': None,
                 'augmentation': {
                     'speaker': False,
@@ -42,7 +44,8 @@ class hparams:
                 'modules': 'all',
                 'steps': 50000,
                 'batch_size': 2,
-                'lr_generator': 1e-5,
+                'lr_wavenet': 1e-5,
+                'lr_wavenet-postnet': 1e-6,
                 'lr_discriminator': 1e-3,
                 'augmentation': {
                     'speaker': False,

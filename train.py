@@ -117,8 +117,9 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
         step_offset = sum([params['steps'] for i, params in hp.training.scheme.items() if i < current_phase])
 
         # Update learning rate
-        optimizer.param_groups[0]['lr'] = phase_params['lr_generator']
-        optimizer.param_groups[1]['lr'] = 0.1 * phase_params['lr_generator']
+        optimizer.param_groups[0]['lr'] = phase_params['lr_wavenet']
+        if phase_params['lr_wavenet-postnet'] is not None:
+            optimizer.param_groups[1]['lr'] = phase_params['lr_wavenet-postnet']
         if phase_params['lr_discriminator'] is not None:
             optimizer.param_groups[2]['lr'] = phase_params['lr_discriminator']
 
