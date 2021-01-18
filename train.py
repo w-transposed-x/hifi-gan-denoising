@@ -118,7 +118,7 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
 
         # Update learning rate
         optimizer.param_groups[0]['lr'] = phase_params['lr_wavenet']
-        if phase_params['lr_wavenet-postnet'] is not None:
+        if phase_params['lr_postnet'] is not None:
             optimizer.param_groups[1]['lr'] = phase_params['lr_postnet']
         if phase_params['lr_discriminators'] is not None:
             optimizer.param_groups[2]['lr'] = phase_params['lr_discriminators']
