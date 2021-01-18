@@ -13,7 +13,7 @@ class PostNet(nn.Module):
         self.layers = nn.ModuleList()
         for i in range(hp.model.postnet.n_layers):
             in_channels = 1 if i == 0 else hp.model.postnet.n_channels
-            out_channels = hp.model.postnet.n_channels if i != (hp.model.postnet.n_layers - 1) else 1
+            out_channels = hp.model.postnet.n_channels if i < (hp.model.postnet.n_layers - 1) else 1
             self.layers.append(
                 nn.Conv1d(in_channels=in_channels,
                           out_channels=out_channels,
@@ -23,8 +23,10 @@ class PostNet(nn.Module):
             )
 
     def forward(self, prediction):
-        for layer in self.layers:
-            prediction = torch.tanh(layer(prediction))
+        for i, layer in enumerate(self.layers):
+            prediction = layer(prediction)
+            if i < hp.model.postnet.n_layers - 1:
+                prediction = torch.tanh(prediction)
         return prediction
 
 
