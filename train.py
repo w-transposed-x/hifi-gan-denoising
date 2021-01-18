@@ -119,9 +119,9 @@ def training(model, optimizer, criterion, scaler, logger, process_group, run_dir
         # Update learning rate
         optimizer.param_groups[0]['lr'] = phase_params['lr_wavenet']
         if phase_params['lr_wavenet-postnet'] is not None:
-            optimizer.param_groups[1]['lr'] = phase_params['lr_wavenet-postnet']
-        if phase_params['lr_discriminator'] is not None:
-            optimizer.param_groups[2]['lr'] = phase_params['lr_discriminator']
+            optimizer.param_groups[1]['lr'] = phase_params['lr_postnet']
+        if phase_params['lr_discriminators'] is not None:
+            optimizer.param_groups[2]['lr'] = phase_params['lr_discriminators']
 
         # Initialize data loaders
         train_data = ConvDataset(sp_files=utils.core.parse_data_structure(hp.files.train_speaker),
@@ -266,9 +266,9 @@ if __name__ == '__main__':
     model = HiFiGAN(generator=WaveNet())
     model.cuda(args.local_rank)
     optimizer = torch.optim.Adam([
-        {'params': model.generator.wavenet.parameters()},
-        {'params': model.generator.postnet.parameters()},
-        {'params': model.discriminators.parameters()}
+        {'params': model.generator.wavenet.parameters(), 'name': 'wavenet'},
+        {'params': model.generator.postnet.parameters(), 'name': 'postnet'},
+        {'params': model.discriminators.parameters(), 'name': 'discriminators'}
     ])
     criterion = CombinedLoss(args.local_rank)
     scaler = torch.cuda.amp.GradScaler() if hp.training.mixed_precision else None
