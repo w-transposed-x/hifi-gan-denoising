@@ -11,12 +11,12 @@ class hparams:
         sequence_length = 32000  # According to Su et al. (2020)
         resample_freqs = [16000, 8000, 4000]  # According to Su et al. (2020)
         mixed_precision = True
-        validation_every_n_steps = 10000
-        n_validation_steps = 1000
+        validation_every_n_steps = 1000 #10000
+        n_validation_steps = 200 #1000
         scheme = {  # According to Su et al. (2020), batch sizes chosen to max out 8GB VRAM
             0: {
                 'modules': 'wavenet',
-                'steps': 500000,
+                'steps': 5000, #500000,
                 'batch_size': 3,
                 'lr_generator': 1e-3,
                 'lr_discriminator': None,
@@ -28,7 +28,7 @@ class hparams:
             },
             1: {
                 'modules': 'wavenet-postnet',
-                'steps': 500000,
+                'steps': 5000, #500000,
                 'batch_size': 3,
                 'lr_generator': 1e-4,
                 'lr_discriminator': None,
@@ -40,7 +40,7 @@ class hparams:
             },
             2: {
                 'modules': 'all',
-                'steps': 50000,
+                'steps': 500, #50000,
                 'batch_size': 2,
                 'lr_generator': 1e-5,
                 'lr_discriminator': 1e-3,
@@ -116,9 +116,17 @@ class hparams:
             hop_length = [512, 128]
 
     class files:
-        train_speaker = ''
-        valid_speaker = ''
-        train_ir = ''
-        valid_ir = ''
-        train_noise = ''
-        valid_noise = ''
+        # train_speaker = './data/train/DAPS'
+        # valid_speaker = './data/test/DAPS'
+        # train_ir = './data/train/IRs'
+        # valid_ir = './data/test/IRs'
+        # train_noise = './data/train/noise'
+        # valid_noise = './data/test/noise'
+        
+        # For subsampled Test Run
+        train_speaker = 'data/sub/train/DAPS'
+        valid_speaker = 'data/sub/test/DAPS'
+        train_ir = 'data/sub/train/IRs'
+        valid_ir = 'data/sub/test/IRs'
+        train_noise = 'data/sub/train/noise'
+        valid_noise = 'data/sub/test/noise'
