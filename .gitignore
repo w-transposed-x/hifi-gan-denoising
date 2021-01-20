@@ -49,3 +49,7 @@ Thumbs.db
 *.mov
 *.wmv
 
+.DS_Store
+# Spyder project settings
+.spyderproject
+.spyproject
