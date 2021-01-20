@@ -6,6 +6,8 @@ import pandas as pd
 import torch
 import torch.distributed
 
+import utils.s3_utils as s3_utils
+ 
 
 def import_module(path):
     spec = util.spec_from_file_location('hparams', path)
@@ -70,8 +72,8 @@ def dir_walk(path, ext):
 def parse_data_structure(path):
     # Checks if supplied path points to dir or dataframe
     assert path != '', 'Please set your data paths in hparams.py.'
-    if os.path.isdir(path):
-        files = dir_walk(path, ext=('.wav', '.WAV'))
+    if s3_utils.is_path_existed(path):
+        files = s3_utils.load_file_paths(path)
         df = pd.DataFrame(files, columns=['path'])
         return df
     elif path.endswith('.pkl'):

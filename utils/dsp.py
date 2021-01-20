@@ -7,20 +7,22 @@ from scipy.signal import hilbert
 from hparams import hparams as hp
 from utils.filter import filterbank
 
+import utils.s3_utils as s3_utils
+
 
 def load_audio(file, max_seconds=None):
     # Instead of loading audio as mono, a random channel is chosen since
     # some IR files might have a large number of channels.
-    info = sf.info(file)
+    info = sf.info(s3_utils.load_audio_object(file))
     if max_seconds is not None:
         rng = np.random.default_rng()
         start = rng.integers(low=0, high=np.max((int(info.frames - max_seconds * info.samplerate), 1)))
-        audio = next(sf.blocks(file=file,
+        audio = next(sf.blocks(file=s3_utils.load_audio_object(file),
                                blocksize=max_seconds * info.samplerate,
                                start=start,
                                always_2d=True)).T
     else:
-        audio, _ = sf.read(file, always_2d=True)
+        audio, _ = sf.read(s3_utils.load_audio_object(file), always_2d=True)
         audio = audio.T
 
     # Randomly chooses channel from signal
