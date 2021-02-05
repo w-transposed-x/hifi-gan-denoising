@@ -83,3 +83,46 @@ def load_audio_object(key_path):
     file = file_object['Body'].read()
     
     return io.BytesIO(file)
+
+
+#get paths for folders inside an object/folder
+def load_folder_paths_from_path(key_path): 
+        
+    s3_client = boto3.client(
+                        's3',
+                        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'), 
+                        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'), 
+                        region_name=os.getenv('AWS_DEFAULT_REGION'))
+     
+    # These define the bucket and object to read
+    bucket = 'speakupai-s3-bucket'
+    
+   
+    
+    
+    #list objects
+    objects = s3_client.list_objects_v2(Bucket=bucket, Prefix=key_path, Delimiter='/')
+    
+    file_list = [obj['Prefix'] for obj in objects['CommonPrefixes']]
+
+
+    return file_list
+
+
+def copy_objects(source, destination):
+
+    s3_client = boto3.client(
+                        's3',
+                        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'), 
+                        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'), 
+                        region_name=os.getenv('AWS_DEFAULT_REGION'))
+     
+    # These define the bucket and object to read
+    bucket = 'speakupai-s3-bucket'
+    
+    copy_source = {
+    'Bucket': bucket,
+    'Key': source
+    }
+    
+    s3_client.copy(copy_source, bucket, destination)
