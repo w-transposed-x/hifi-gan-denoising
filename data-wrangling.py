@@ -176,7 +176,7 @@ if __name__ == "__main__":
         
     
     #compute metrics
-    #example: python data-wrangling.py --compute_metrics True --compute_metrics_data_original '../inference-dataset' --compute_metrics_data_inference '../inference-output/02-04-2021/'
+    #example: python data-wrangling.py --compute_metrics True --compute_metrics_data_original '../inference-dataset' --compute_metrics_data_inference '../inference-output/02-04-2021/' --compute_metrics_output_dir '../metrics-report'
     if (args.compute_metrics == True and (args.compute_metrics_data_original == None or args.compute_metrics_data_inference == None or args.compute_metrics_output_dir == None)):
         parser.error("--compute_metrics requires --compute_metrics_data_original and --compute_metrics_data_inference.")
     
