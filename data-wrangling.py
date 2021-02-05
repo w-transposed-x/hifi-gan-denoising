@@ -108,7 +108,7 @@ def compute_metrics(original, inference):
     
     for f in orig_files:
         orig_path = os.path.join(original, f)
-        infer_path = os.path.join(inference, f)
+        infer_path = os.path.join(inference, f.replace('.wav', '_denoised.wav'))
         snd_orig, sr_0 = librosa.load(orig_path, sr=16000)
         snd_denoise, sr_1 = librosa.load(infer_path, sr=16000)    
         pesq = metrics.pesq_score(snd_orig, snd_denoise, samplerate=16000)
