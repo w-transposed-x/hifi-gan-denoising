@@ -117,7 +117,11 @@ def compute_metrics(original, inference, output_dir):
         results.append(result)
 
     now = datetime.now()
-    output_filename = 'metrics-' + now.strftime("%m/%d/%Y-%H:%M:%S")
+    output_filename = 'metrics_' + now.strftime("%m_%d_%Y_%H_%M_%S") + '.csv'
+    
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
     with open(os.path.join(output_dir, output_filename), 'w') as f: 
       
         # using csv.writer method from CSV package 
