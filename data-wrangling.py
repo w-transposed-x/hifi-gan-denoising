@@ -84,6 +84,7 @@ def inference(args):
     with torch.no_grad():
         for file in inference_files:
             filename = os.path.splitext(os.path.split(file)[1])[0]
+            print(f"Inferencing: {filename} with sample rate: {librosa.get_samplerate(file)}")
             x, _ = librosa.load(file, sr=hp.dsp.sample_rate, mono=True)
             target_length = len(x)
             x = torch.tensor(x).to(args.device)
@@ -95,6 +96,12 @@ def inference(args):
 
             with autocast(enabled=hp.training.mixed_precision):
                 y = [model.inference(x_batch) for x_batch in x]
+            
+            #we noticed some tenors in y are not 2D and it caused torch.cat issues at postprocess_inference_data
+            for i in range(len(y)):
+                if len(y[i].shape) < 2:
+                    y[i] = y[i].unsqueeze(0)
+                
             y = utils.data.postprocess_inference_data(y, hp.inference.batched, hp.dsp.sample_rate)
             y = y[:target_length].detach().cpu().numpy()
             sf.write(os.path.join(args.output_dir, f'{filename}_denoised.wav'), y.astype(np.float32),
@@ -104,11 +111,13 @@ def compute_metrics(original, inference, output_dir):
     
     fields = ['file', 'pesq', 'stoi']
     results = []
-    orig_files = os.listdir(original)
+    inference_files = os.listdir(inference)
     
-    for f in orig_files:
-        orig_path = os.path.join(original, f)
-        infer_path = os.path.join(inference, f.replace('.wav', '_denoised.wav'))
+    for f in inference_files:
+        print(f"Computing metrics for: {f}")
+        orig_f =  f.replace('_denoised.wav', '.wav')
+        orig_path = os.path.join(original, orig_f)
+        infer_path = os.path.join(inference, f)
         snd_orig, sr_0 = librosa.load(orig_path, sr=16000)
         snd_denoise, sr_1 = librosa.load(infer_path, sr=16000)    
         pesq = metrics.pesq_score(snd_orig, snd_denoise, samplerate=16000)

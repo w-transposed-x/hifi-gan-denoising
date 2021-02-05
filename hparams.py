@@ -11,12 +11,12 @@ class hparams:
         sequence_length = 32000  # According to Su et al. (2020)
         resample_freqs = [16000, 8000, 4000]  # According to Su et al. (2020)
         mixed_precision = True
-        validation_every_n_steps = 1000 #10000
-        n_validation_steps = 200 #1000
+        validation_every_n_steps = 10000 #10000
+        n_validation_steps = 1000 #1000
         scheme = {  # According to Su et al. (2020), batch sizes chosen to max out 8GB VRAM
             0: {
                 'modules': 'wavenet',
-                'steps': 5000, #500000,
+                'steps': 100000, #500000,
                 'batch_size': 3,
                 'lr_generator': 1e-3,
                 'lr_discriminator': None,
@@ -28,7 +28,7 @@ class hparams:
             },
             1: {
                 'modules': 'wavenet-postnet',
-                'steps': 5000, #500000,
+                'steps': 100000, #500000,
                 'batch_size': 3,
                 'lr_generator': 1e-4,
                 'lr_discriminator': None,
@@ -40,7 +40,7 @@ class hparams:
             },
             2: {
                 'modules': 'all',
-                'steps': 500, #50000,
+                'steps': 10000, #50000,
                 'batch_size': 2,
                 'lr_generator': 1e-5,
                 'lr_discriminator': 1e-3,

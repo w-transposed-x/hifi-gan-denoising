@@ -62,6 +62,12 @@ if __name__ == '__main__':
 
             with autocast(enabled=hp.training.mixed_precision):
                 y = [model.inference(x_batch) for x_batch in x]
+            
+            #we noticed some tenors in y are not 2D and it caused torch.cat issues at postprocess_inference_data
+            for i in range(len(y)):
+                if len(y[i].shape) < 2:
+                    y[i] = y[i].unsqueeze(0)
+                
             y = utils.data.postprocess_inference_data(y, hp.inference.batched, hp.dsp.sample_rate)
             y = y[:target_length].detach().cpu().numpy()
             sf.write(os.path.join(args.output_dir, f'{filename}_denoised.wav'), y.astype(np.float32),
