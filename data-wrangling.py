@@ -100,7 +100,7 @@ def inference(args):
             sf.write(os.path.join(args.output_dir, f'{filename}_denoised.wav'), y.astype(np.float32),
                      samplerate=hp.dsp.sample_rate)
 
-def compute_metrics(original, inference):
+def compute_metrics(original, inference, output_dir):
     
     fields = ['file', 'pesq', 'stoi']
     results = []
@@ -117,8 +117,12 @@ def compute_metrics(original, inference):
         results.append(result)
 
     now = datetime.now()
-    output_filename = 'metrics-' + now.strftime("%m/%d/%Y-%H:%M:%S")
-    with open(output_filename, 'w') as f: 
+    output_filename = 'metrics_' + now.strftime("%m_%d_%Y_%H_%M_%S") + '.csv'
+    
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    with open(os.path.join(output_dir, output_filename), 'w') as f: 
       
         # using csv.writer method from CSV package 
         write = csv.writer(f) 
@@ -150,6 +154,7 @@ if __name__ == "__main__":
     parser.add_argument('--compute_metrics', required=False, type=str, default=False, help='compute metrics')
     parser.add_argument('--compute_metrics_data_original', required=False, type=str, help='computer metrics original original folder')
     parser.add_argument('--compute_metrics_data_inference', required=False, type=str, help='compute metrics inference data folder')
+    parser.add_argument('--compute_metrics_output_dir', required=False, type=str, help='compute metrics output dir')
     
     
     args = parser.parse_args()
@@ -157,6 +162,7 @@ if __name__ == "__main__":
 
     
     #prepare inference data argument check
+    #example: python data-wrangling.py --prepare_inference_data True --prepare_inference_data_source 'daps-dataset/' --prepare_inference_data_destination 'inference-dataset/'
     if (args.prepare_inference_data == True and (args.prepare_inference_data_source == None or args.prepare_inference_data_destination == None)):
         parser.error("--prepare_inference_data requires --prepare_inference_data_source and --prepare_inference_data_destination.")
     
@@ -165,6 +171,7 @@ if __name__ == "__main__":
     
     
     #execute inference argument check
+    #example: python data-wrangling.py --run_inference True --device 'cuda:0' --checkpoint '../checkpoints/2021-01-27__18_25_35/checkpoints/checkpoint_2_5000.pt' --input '../inference-dataset' --output_dir '../inference-output/02-04-2021/'
     if (args.run_inference == True and (args.input == None or args.input == None or args.output_dir == None)):
         parser.error("--run_inference requires other input")
         
@@ -173,11 +180,12 @@ if __name__ == "__main__":
         
     
     #compute metrics
-    if (args.compute_metrics == True and (args.compute_metrics_data_original == None or args.compute_metrics_data_inference == None)):
+    #example: python data-wrangling.py --compute_metrics True --compute_metrics_data_original '../inference-dataset' --compute_metrics_data_inference '../inference-output/02-04-2021/' --compute_metrics_output_dir '../metrics-report'
+    if (args.compute_metrics == True and (args.compute_metrics_data_original == None or args.compute_metrics_data_inference == None or args.compute_metrics_output_dir == None)):
         parser.error("--compute_metrics requires --compute_metrics_data_original and --compute_metrics_data_inference.")
     
     if args.compute_metrics:    
-        compute_metrics(args.compute_metrics_data_original, args.compute_metrics_data_inference)
+        compute_metrics(args.compute_metrics_data_original, args.compute_metrics_data_inference, args.compute_metrics_output_dir)
 
 
         
